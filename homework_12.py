@@ -155,6 +155,6 @@ if __name__ == '__main__':
     # backup(r'C:\Windows\ru-RU')
     # backup(r'C:\Program Files (x86)')
     # 4
-    # cat_tree(r'C:\Users\slano\PycharmProjects\homeworks')
+    # cat_tree(r'C:\Users\slano\PycharmProjects\pythonProject3')
     # 5
     print(*cat('-n', 'stud.txt', 'peoples.txt', '|sort', '>abs.txt'), sep='\n')
