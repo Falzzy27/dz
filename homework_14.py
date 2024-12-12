@@ -36,7 +36,7 @@ def reverse(num):
 
 # 3 Проверить число на простоту
 
-def simple(num, div=None):
+def simple(num, dilit=None):
     """
         Функция проверяющая число на простоту
 
@@ -45,14 +45,14 @@ def simple(num, div=None):
         Возвращает: True или False
     """
     from sys import setrecursionlimit
-    setrecursionlimit(1_000_000)
-    div = num // 2 + 1 if div is None else div
-    while div >= 2:
-        if num % div == 0:
+    setrecursionlimit(100_000_000)
+    dilit = num // 2 + 1 if dilit is None else dilit
+    while dilit >= 2:
+        if num % dilit == 0:
 
             return False
         else:
-            return simple(num, div - 1)
+            return simple(num, dilit - 1)
     else:
         return True
 
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     # 2
     # print(reverse(21211))
     # 3
-    print(simple(133333))
+    print(simple(93131))
