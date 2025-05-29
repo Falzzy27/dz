@@ -1,120 +1,137 @@
 import tkinter as tk
-import math
 
-
-def make_canvas(root, width=900, height=650, bg_color="#1e1f2b"):
-    """Создаем холст с необычным фоном."""
-    canvas = tk.Canvas(root, width=width, height=height, bg=bg_color, highlightthickness=0)
-    canvas.pack(padx=25, pady=25)
+def make_canvas(root, width=800, height=600, bg="#222233"):
+    canvas = tk.Canvas(root, width=width, height=height, bg=bg, highlightthickness=0)
+    canvas.pack(padx=20, pady=20)
     return canvas
 
-
-def draw_axes_and_grid(cnv, ox, oy, step=60, axis_color="#f0f0f0"):
-    """Рисуем светлые оси и более мягкую сетку."""
+def draw_axes_and_grid(cnv, ox, oy, step=50, color="#666666"):
     w, h = int(cnv["width"]), int(cnv["height"])
-
-    # Вертикальная сетка (тонкая)
+    # Сетка по X
     for x in range(0, w, step):
-        cnv.create_line(x, 0, x, h, fill="#555566", dash=(2, 4))
+        cnv.create_line(x, 0, x, h, fill=color, dash=(3, 5))
         if abs(x - ox) > 3:
-            cnv.create_text(x, oy + 20, text=str((x - ox) // step), fill=axis_color, font=("Helvetica", 10, "italic"))
-
-    # Горизонтальная сетка (тонкая)
+            cnv.create_text(x, oy + 15, text=str((x - ox) // step), fill="#ddd")
+    # Сетка по Y
     for y in range(0, h, step):
-        cnv.create_line(0, y, w, y, fill="#555566", dash=(2, 4))
+        cnv.create_line(0, y, w, y, fill=color, dash=(3, 5))
         if abs(y - oy) > 3:
-            cnv.create_text(ox - 20, y, text=str(-(y - oy) // step), fill=axis_color, font=("Helvetica", 10, "italic"))
+            cnv.create_text(ox - 15, y, text=str(-(y - oy) // step), fill="#ddd")
 
-    # Оси (более яркие и толстые)
-    cnv.create_line(0, oy, w, oy, fill=axis_color, width=3)
-    cnv.create_line(ox, 0, ox, h, fill=axis_color, width=3)
+    # Оси
+    cnv.create_line(0, oy, w, oy, fill="#fff", width=2)
+    cnv.create_line(ox, 0, ox, h, fill="#fff", width=2)
 
-
-def plot_function(cnv, func, origin_x, origin_y, scale=60, color="#76c7ff"):
-    """Рисуем график с более плавной кривой и другой толщиной линии."""
-    prev = None
-    width, height = int(cnv["width"]), int(cnv["height"])
-
-    for scr_x in range(width):
-        x_val = (scr_x - origin_x) / scale
+def plot_function(cnv, f, ox, oy, scale=50, color="#4a90e2"):
+    w, h = int(cnv["width"]), int(cnv["height"])
+    prev_point = None
+    for scr_x in range(w):
+        x = (scr_x - ox) / scale
         try:
-            y_val = func(x_val)
-            scr_y = origin_y - y_val * scale
-        except Exception:
-            prev = None
+            y = f(x)
+            scr_y = oy - y * scale
+        except:
+            prev_point = None
             continue
 
-        if 0 <= scr_y <= height:
-            if prev:
-                cnv.create_line(prev[0], prev[1], scr_x, scr_y, fill=color, width=3, smooth=True)
-            prev = (scr_x, scr_y)
+        if 0 <= scr_y <= h:
+            if prev_point:
+                cnv.create_line(prev_point[0], prev_point[1], scr_x, scr_y, fill=color, width=2)
+            prev_point = (scr_x, scr_y)
         else:
-            prev = None
+            prev_point = None
 
+def newton_method_visual(cnv, f, df, x0, ox, oy, scale=50, eps=1e-6, max_iter=15):
+    x = x0
+    line_length = 200  # длина касательной в пикселях с каждой стороны от точки касания
 
-def bisection_root(f, a, b, eps=1e-5):
-    """Находим корень методом бисекции с повышенной точностью."""
-    fa, fb = f(a), f(b)
-    if fa * fb > 0:
-        return None
+    for _ in range(max_iter):
+        fx = f(x)
+        dfx = df(x)
+        if dfx == 0:
+            print("Производная равна нулю, метод остановлен.")
+            return None
 
-    while (b - a) / 2 > eps:
-        mid = (a + b) / 2
-        fmid = f(mid)
-        if fmid == 0:
-            return mid
-        elif fa * fmid < 0:
-            b, fb = mid, fmid
-        else:
-            a, fa = mid, fmid
-    return (a + b) / 2
+        # Экранные координаты текущей точки
+        cx = ox + x * scale
+        cy = oy - fx * scale
 
+        # Рассчитываем вектор касательной линии
+        # Касательная: y = f(x0) + f'(x0)*(x - x0)
+        # В экранных координатах наклон будет -dfx * scale, потому что Y инвертирован
+        # Направляющий вектор касательной на экране: (dx, dy) с длиной line_length
+        # dx = line_length по X, dy = -dfx * scale * dx / scale = -dfx * dx
+        # Но проще взять нормализованный вектор и масштабировать.
 
-def mark_root(cnv, root_x, ox, oy, scale=60, color="#ff4c4c"):
-    """Отмечаем корень красным кругом и подписью с тенью."""
-    cx = ox + root_x * scale
+        # Наклон касательной в экранных координатах (производная в «логических» координатах, Y вверх)
+        slope = -dfx  # знак минус из-за инверсии Y в экранных координатах
+
+        # Вектор направления касательной (нормируем)
+        from math import sqrt
+        dx = 1
+        dy = slope
+        length = sqrt(dx*dx + dy*dy)
+        dx /= length
+        dy /= length
+
+        # Конечные точки касательной линии с длиной line_length в обе стороны
+        x1 = cx - dx * line_length
+        y1 = cy - dy * line_length
+        x2 = cx + dx * line_length
+        y2 = cy + dy * line_length
+
+        # Рисуем касательную
+        cnv.create_line(x1, y1, x2, y2, fill="#00ff88", width=2, dash=(1, 1))
+
+        # Следующее приближение
+        x_new = x - fx / dfx
+
+        # Проверка сходимости
+        if abs(x_new - x) < eps:
+            # Отмечаем найденный корень
+            cx_new = ox + x_new * scale
+            cy_new = oy
+            r_root = 7
+            cnv.create_oval(cx_new - r_root, cy_new - r_root, cx_new + r_root, cy_new + r_root, fill="#ff4444", outline="")
+            return x_new
+
+        x = x_new
+
+    print("Метод Ньютона не сошелся за заданное количество итераций.")
+    return None
+
+def mark_root(cnv, x_root, ox, oy, scale=50, color="#ff4444"):
+    cx = ox + x_root * scale
     cy = oy
-    r = 7
-    # Тень
-    cnv.create_oval(cx - r + 2, cy - r + 2, cx + r + 2, cy + r + 2, fill="#800000", outline="")
-    # Круг
+    r = 8
     cnv.create_oval(cx - r, cy - r, cx + r, cy + r, fill=color, outline="")
-    # Текст с тенью
-    cnv.create_text(cx + 1, cy - 16 + 1, text=f"{root_x:.4f}", fill="#440000", font=("Helvetica", 12, "bold"))
-    cnv.create_text(cx, cy - 16, text=f"{root_x:.4f}", fill=color, font=("Helvetica", 12, "bold"))
-
-
-def draw_formula(cnv, ox, oy):
-    """Пишем формулу функции в окне."""
-    formula_text = "y = -x² + 2"
-    cnv.create_text(ox + 300, oy - 270, text=formula_text, fill="#fff", font=("Helvetica", 18, "bold italic"))
-
+    cnv.create_text(cx, cy - 15, text=f"x = {x_root:.5f}", fill=color, font=("Arial", 12, "bold"))
 
 def main():
     root = tk.Tk()
-    root.title("График функции")
-    root.configure(bg="#121421")
+    root.title("Метод Ньютона с касательными")
 
     canvas = make_canvas(root)
-    origin_x, origin_y = 450, 325
-    grid_step = 60
+    origin_x, origin_y = 400, 300
+    grid_step = 50
 
     draw_axes_and_grid(canvas, origin_x, origin_y, step=grid_step)
-    draw_formula(canvas, origin_x, origin_y)
 
+    # Функция и ее производная
     f = lambda x: -x**2 + 2
+    df = lambda x: -2*x
+
     plot_function(canvas, f, origin_x, origin_y, scale=grid_step)
 
-    root_x = bisection_root(f, -2.5, 2.5)
+    initial_guess = 1.5
+    root_x = newton_method_visual(canvas, f, df, initial_guess, origin_x, origin_y, scale=grid_step)
     if root_x is not None:
         mark_root(canvas, root_x, origin_x, origin_y, scale=grid_step)
-        print(f"Корень функции: x = {root_x:.5f}")
-
-    y_at_zero = f(0)
-    print(f"Пересечение с осью Y: (0, {y_at_zero})")
+        print(f"Корень найден: x = {root_x:.6f}")
+    else:
+        print("Корень не найден")
 
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
