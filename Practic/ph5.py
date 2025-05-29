@@ -16,23 +16,6 @@ def rectangle_method(func, start, end, steps, mode):
         x += h
     return total
 
-def trapezoid_method(func, start, end, steps):
-    h = (end - start) / steps
-    total = 0
-    x = start
-    for i in range(steps):
-        try:
-            y1 = func(x)
-            y2 = func(x + h)
-            if abs(y1) > 1e3 or abs(y2) > 1e3:
-                y1 = 0
-                y2 = 0
-            total += (y1 + y2) * h / 2
-        except Exception:
-            pass
-        x += h
-    return total
-
 def draw_axes_and_grid(canvas, cx, cy, scale, width=1000, height=800):
     step_grid = 1
     range_grid = 15
@@ -92,47 +75,17 @@ def draw_rectangles(canvas, func, start, end, steps, cx, cy, scale, mode, color=
         y1 = cy - y_val * scale
         canvas.create_rectangle(x0, y0, x1, y1, outline=color, fill=color, stipple="gray12", tags="rects")
 
-def draw_trapezoids(canvas, func, start, end, steps, cx, cy, scale, color="#228B22"):
-    canvas.delete("rects")
-    h = (end - start) / steps
-    for i in range(steps):
-        x0 = start + i * h
-        x1 = x0 + h
-        try:
-            y0 = func(x0)
-            y1 = func(x1)
-            if abs(y0) > 1e3 or abs(y1) > 1e3:
-                y0 = 0
-                y1 = 0
-        except Exception:
-            y0 = 0
-            y1 = 0
-        # Координаты для рисования трапеции
-        px0 = cx + x0 * scale
-        px1 = cx + x1 * scale
-        py0 = cy - y0 * scale
-        py1 = cy - y1 * scale
-
-        # Рисует трапецию как многоугольник
-        canvas.create_polygon(px0, cy, px0, py0, px1, py1, px1, cy,
-                              outline=color, fill=color, stipple="gray25", tags="rects")
-
 def redraw():
     canvas.delete("all")
     draw_axes_and_grid(canvas, center_x, center_y, scale)
     draw_function(canvas, f, graph_start, graph_end, center_x, center_y, scale)
     if integration_active:
-        if method == "rectangle":
-            draw_rectangles(canvas, f, a, b, n, center_x, center_y, scale, mode)
-        elif method == "trapezoid":
-            draw_trapezoids(canvas, f, a, b, n, center_x, center_y, scale)
+        draw_rectangles(canvas, f, a, b, n, center_x, center_y, scale, mode)
 
-def run_integration(new_mode=None, new_method=None):
-    global mode, integration_active, method
+def run_integration(new_mode=None):
+    global mode, integration_active
     if new_mode is not None:
         mode = new_mode
-    if new_method is not None:
-        method = new_method
 
     try:
         a_val = float(entry_a.get())
@@ -149,18 +102,8 @@ def run_integration(new_mode=None, new_method=None):
 
     integration_active = True
     redraw()
-
-    if method == "rectangle":
-        result = rectangle_method(f, a, b, n, mode)
-        method_name = "Метод прямоугольников"
-    elif method == "trapezoid":
-        result = trapezoid_method(f, a, b, n)
-        method_name = "Метод трапеций"
-    else:
-        result = 0
-        method_name = "Неизвестный метод"
-
-    result_label.config(text=f"{method_name}: приближённое значение интеграла: {result:.6f}")
+    result = rectangle_method(f, a, b, n, mode)
+    result_label.config(text=f"Приближённое значение интеграла: {result:.6f}")
 
 def start_pan(event):
     global pan_start_x, pan_start_y
@@ -200,7 +143,6 @@ n = 30
 scale = 150
 center_x, center_y = 500, 400
 mode = 0
-method = "rectangle"
 integration_active = True
 graph_start, graph_end = -5, 5
 
@@ -208,7 +150,7 @@ pan_start_x = None
 pan_start_y = None
 
 root = tk.Tk()
-root.title("Метод прямоугольников и трапеций — интегрирование")
+root.title("Метод прямоугольников — интегрирование")
 root.geometry("1000x900")
 root.configure(bg="#f5f7fa")
 root.resizable(False, False)
@@ -216,27 +158,23 @@ root.resizable(False, False)
 canvas = tk.Canvas(root, width=1000, height=700, bg="white", highlightthickness=0)
 canvas.pack(pady=15)
 
+
 btn_frame = tk.Frame(root, bg="#f5f7fa")
 btn_frame.pack(pady=10)
 
 btn_left = tk.Button(btn_frame, text="Левые прямоугольники", width=20, bg="#ffa500", fg="white",
                      activebackground="#ff8c00", activeforeground="white",
                      relief=tk.FLAT, font=("Segoe UI", 11, "bold"),
-                     command=lambda: run_integration(0, "rectangle"))
-btn_left.pack(side=tk.LEFT, padx=10)
+                     command=lambda: run_integration(0))
+btn_left.pack(side=tk.LEFT, padx=15)
 
 btn_right = tk.Button(btn_frame, text="Правые прямоугольники", width=20, bg="#ff4500", fg="white",
                       activebackground="#ff6347", activeforeground="white",
                       relief=tk.FLAT, font=("Segoe UI", 11, "bold"),
-                      command=lambda: run_integration(1, "rectangle"))
-btn_right.pack(side=tk.LEFT, padx=10)
+                      command=lambda: run_integration(1))
+btn_right.pack(side=tk.LEFT, padx=15)
 
-btn_trapezoid = tk.Button(btn_frame, text="Метод трапеций", width=20, bg="#228B22", fg="white",
-                          activebackground="#32CD32", activeforeground="white",
-                          relief=tk.FLAT, font=("Segoe UI", 11, "bold"),
-                          command=lambda: run_integration(None, "trapezoid"))
-btn_trapezoid.pack(side=tk.LEFT, padx=10)
-
+# Поля для интервала интегрирования
 interval_frame = tk.Frame(root, bg="#f5f7fa")
 interval_frame.pack(pady=10)
 
@@ -258,13 +196,15 @@ apply_button.pack(side=tk.LEFT, padx=15)
 result_label = tk.Label(root, text="Приближённое значение интеграла:", font=("Segoe UI", 15, "bold"), bg="#f5f7fa", fg="#333")
 result_label.pack(pady=15)
 
+# Панорамирование мышью
 canvas.bind("<ButtonPress-1>", start_pan)
 canvas.bind("<B1-Motion>", do_pan)
 
+# Зум колесом мыши
 canvas.bind("<MouseWheel>", zoom)
 canvas.bind("<Button-4>", lambda e: zoom(type("Event", (), {"x": e.x, "y": e.y, "delta": 120})()))
 canvas.bind("<Button-5>", lambda e: zoom(type("Event", (), {"x": e.x, "y": e.y, "delta": -120})()))
 
-run_integration(0, "rectangle")
+run_integration(0)
 
 root.mainloop()
