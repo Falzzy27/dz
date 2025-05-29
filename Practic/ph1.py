@@ -2,20 +2,23 @@ import tkinter as tk
 import math
 
 
-def highlight_root(canvas, x_root, ox, oy, scale=50, color="#ff6347"):
+def highlight_point(canvas, x, y, ox, oy, scale=50, color="#ff6347", label=""):
     """
-    Отмечаем на графике найденный корень уравнения.
+    Отметка точки (x, y) на графике.
     """
-    cx = ox + x_root * scale
-    cy = oy
+    cx = ox + x * scale
+    cy = oy - y * scale
     radius = 6
-    canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius, fill=color, outline='')
-    canvas.create_text(cx, cy - 15, text=f"{x_root:.3f}", fill=color, font=("Arial", 10, "bold"))
+    canvas.create_oval(cx - radius, cy - radius, cx + radius, cy + radius,
+                       fill=color, outline='')
+    if label:
+        canvas.create_text(cx, cy - 15, text=label, fill=color,
+                           font=("Arial", 10, "bold"))
 
 
 def draw_grid_and_axes(cnv, ox, oy, step=50, axis_color="#aaaaaa"):
     """
-    Рисуем координатные оси и легкую сетку на холсте.
+    Рисуем координатные оси и сетку.
     """
     w = int(cnv["width"])
     h = int(cnv["height"])
@@ -34,39 +37,49 @@ def draw_grid_and_axes(cnv, ox, oy, step=50, axis_color="#aaaaaa"):
             label = str(-(y - oy) // step)
             cnv.create_text(ox - 15, y, text=label, fill=axis_color, font=("Arial", 9, "bold"))
 
-    # Рисуем оси
+    # Оси
     cnv.create_line(0, oy, w, oy, fill=axis_color, width=2)
     cnv.create_line(ox, 0, ox, h, fill=axis_color, width=2)
 
 
-def find_root_bisection(f, left, right, tol=1e-4):
+def find_roots(f, a, b, step=0.1, tol=1e-4):
     """
-    Методом бисекции ищем корень уравнения f(x) = 0 на отрезке [left, right].
-    Возвращаем None, если корень отсутствует.
+    Поиск всех корней на отрезке [a, b] методом бисекции.
     """
-    val_left = f(left)
-    val_right = f(right)
+    roots = []
+    x = a
+    while x < b:
+        x1 = x
+        x2 = x + step
+        if f(x1) * f(x2) < 0:
+            root = bisection(f, x1, x2, tol)
+            if root is not None:
+                roots.append(root)
+        x += step
+    return roots
 
-    if val_left * val_right > 0:
+
+def bisection(f, a, b, tol=1e-4):
+    fa, fb = f(a), f(b)
+    if fa * fb > 0:
         return None
-
-    while (right - left) / 2 > tol:
-        mid = (left + right) / 2
-        val_mid = f(mid)
-        if val_mid == 0:
-            return mid
-        elif val_left * val_mid < 0:
-            right = mid
-            val_right = val_mid
+    while (b - a) / 2 > tol:
+        m = (a + b) / 2
+        fm = f(m)
+        if fm == 0:
+            return m
+        elif fa * fm < 0:
+            b = m
+            fb = fm
         else:
-            left = mid
-            val_left = val_mid
-    return (left + right) / 2
+            a = m
+            fa = fm
+    return (a + b) / 2
 
 
 def plot_func(cnv, func, origin_x, origin_y, scale=50, color="#1e90ff"):
     """
-    Рисуем график функции func на canvas cnv.
+    Построение графика функции.
     """
     prev_point = None
     width = int(cnv["width"])
@@ -77,22 +90,20 @@ def plot_func(cnv, func, origin_x, origin_y, scale=50, color="#1e90ff"):
         try:
             real_y = func(real_x)
             screen_y = origin_y - real_y * scale
-        except Exception:
+        except:
             prev_point = None
             continue
 
         if 0 <= screen_y <= height:
-            if prev_point is not None:
-                cnv.create_line(prev_point[0], prev_point[1], screen_x, screen_y, fill=color, width=2, smooth=True)
+            if prev_point:
+                cnv.create_line(prev_point[0], prev_point[1], screen_x, screen_y,
+                                fill=color, width=2)
             prev_point = (screen_x, screen_y)
         else:
             prev_point = None
 
 
 def make_canvas(root_win, w=800, h=600, bg="#2e2e2e"):
-    """
-    Создаем и возвращаем холст с заданными параметрами.
-    """
     c = tk.Canvas(root_win, width=w, height=h, bg=bg, highlightthickness=0)
     c.pack(padx=20, pady=20)
     return c
@@ -100,25 +111,29 @@ def make_canvas(root_win, w=800, h=600, bg="#2e2e2e"):
 
 def main():
     window = tk.Tk()
-    window.title("Функциональный график")
+    window.title("График функции и корни")
     window.configure(bg="#3a3a3a")
 
     canvas = make_canvas(window)
     center_x, center_y = 400, 300
-    scale = 50
+    scale = 80
 
     draw_grid_and_axes(canvas, center_x, center_y, step=scale)
 
-    f = lambda x: -x ** 2 + 2
+    f = lambda x: -x ** 2 + 2  # Пример функции
+
     plot_func(canvas, f, center_x, center_y, scale=scale)
 
-    root_val = find_root_bisection(f, -2, 2)
-    if root_val is not None:
-        highlight_root(canvas, root_val, center_x, center_y, scale=scale)
-        print(f"Корень найден: x = {root_val:.4f}")
-
+    # Показываем пересечение с осью Y (x=0)
     y_intersect = f(0)
-    print(f"Пересечение с Y: (0, {y_intersect})")
+    highlight_point(canvas, 0, y_intersect, center_x, center_y, scale, label=f"{y_intersect:.2f}")
+    print(f"Пересечение с OY: (0, {y_intersect:.2f})")
+
+    # Показываем все корни функции
+    roots = find_roots(f, -5, 5)
+    for r in roots:
+        highlight_point(canvas, r, 0, center_x, center_y, scale, label=f"{r:.2f}")
+        print(f"Корень найден: x = {r:.4f}")
 
     window.mainloop()
 
