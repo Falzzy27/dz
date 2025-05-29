@@ -13,7 +13,7 @@ canvas = tk.Canvas(window, width=WINDOW_WIDTH, height=WINDOW_HEIGHT, bg="white")
 canvas.pack()
 
 def draw_ticks(vertical=True, spacing=10, center_x=CENTER_X, center_y=CENTER_Y, axis_len=500, color='black'):
-    """Рисует отсечки на координатных осях."""
+    """Рисует отсечки на координатных осях"""
     tick_size = spacing // 10 if spacing <= 50 else spacing // 20
     canvas_w = int(canvas['width'])
     canvas_h = int(canvas['height'])
@@ -52,7 +52,7 @@ def draw_ticks(vertical=True, spacing=10, center_x=CENTER_X, center_y=CENTER_Y, 
 
 def draw_axis(vertical=True, axis_len=500, center_x=CENTER_X, center_y=CENTER_Y,
               spacing=10, color='black'):
-    """Рисует координатную ось и вызывает draw_ticks."""
+    """Рисует координатную ось и вызывает draw_ticks"""
     if vertical:
         y_shift = (WINDOW_HEIGHT - axis_len) // 2
         canvas.create_line(center_x, y_shift + axis_len, center_x, y_shift, arrow='first', fill=color)
@@ -63,7 +63,7 @@ def draw_axis(vertical=True, axis_len=500, center_x=CENTER_X, center_y=CENTER_Y,
         draw_ticks(False, spacing, center_x, center_y, axis_len, color)
 
 def setup_axes(show_x=True, show_y=True, spacing=10, center_x=CENTER_X, center_y=CENTER_Y, color='black'):
-    """Рисует оси по флагам."""
+    """Рисует оси по меткам"""
     if show_y:
         draw_axis(True, 500, center_x, center_y, spacing, color)
     if show_x:
@@ -74,7 +74,7 @@ def default_function(x):
 
 def draw_function(func, x_start, x_end, spacing, center_x, center_y,
                   mark_x=None, color='blue', thickness=2, dot_color='red'):
-    """Рисует функцию на интервале и отмечает точку при заданном X."""
+    """Рисует функцию на интервале и отмечает точку при заданном X"""
     step = 0.1
     points = int((x_end - x_start) / step)
 
