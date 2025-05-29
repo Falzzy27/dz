@@ -1,32 +1,32 @@
 class Duo:
     def __init__(self, first, second):
-        """Создание пары значений."""
+        """Создание пары значений"""
         self.first = first
         self.second = second
 
     def show(self):
-        """Отобразить значения."""
+        """Отобразить значения"""
         print("-> Значения:")
         print(f"Первое: {self.first}\nВторое: {self.second}")
 
     def modify(self, a, b):
-        """Изменить оба значения."""
+        """Изменить оба значения"""
         self.first = a
         self.second = b
         print(f"Значения обновлены на: ({self.first}, {self.second})")
 
     def total(self):
-        """Вернуть сумму."""
+        """Вернуть сумму"""
         return self.first + self.second
 
     def larger(self):
-        """Вернуть большее из двух."""
+        """Вернуть большее из двух"""
         return self.first if self.first > self.second else self.second
 
 
 class BoundedCounter:
     def __init__(self, lower=0, upper=10, current=None):
-        """Инициализация ограниченного счётчика."""
+        """Инициализация ограниченного счётчика"""
         self.lower = lower
         self.upper = upper
         self.current = current if current is not None else lower
@@ -36,27 +36,27 @@ class BoundedCounter:
             self.current += 1
             print(f"[+] Увеличено: {self.current}")
         else:
-            print("[!] Достигнут предел сверху.")
+            print("[!] Достигнут предел сверху")
 
     def down(self):
         if self.current > self.lower:
             self.current -= 1
             print(f"[-] Уменьшено: {self.current}")
         else:
-            print("[!] Достигнут предел снизу.")
+            print("[!] Достигнут предел снизу")
 
     def status(self):
-        """Показать текущее значение."""
+        """Показать текущее значение"""
         return f"Текущее значение: {self.current}"
 
 
 class Poly:
     def __init__(self, coeffs):
-        """Создание многочлена по списку коэффициентов."""
+        """Создание многочлена по списку коэффициентов"""
         self.coeffs = coeffs
 
     def at(self, val):
-        """Подставить значение в многочлен."""
+        """Подставить значение в многочлен"""
         return sum(c * (val ** i) for i, c in enumerate(self.coeffs))
 
     def __str__(self):
