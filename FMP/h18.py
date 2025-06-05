@@ -39,6 +39,7 @@ class GraphApp:
         self.sidebar = Frame(self.master, width=300, bg="#e6dfd3")
         self.sidebar.pack(side=LEFT, fill=Y)
 
+        # Заголовок
         Label(
             self.sidebar,
             text="Введите функцию:",
@@ -46,7 +47,7 @@ class GraphApp:
             fg="#4a432f",  # тёмно-коричневый текст
             wraplength=280,
             justify=LEFT,
-            font=("Courier", 11, "bold"),
+            font=("Courier", 11, "bold")
         ).pack(pady=(20, 8), padx=15)
 
         self.input = Entry(self.sidebar, font=("Courier", 13), bg="#f0ead8", fg="#4a432f", insertbackground="#4a432f")
@@ -58,6 +59,7 @@ class GraphApp:
         btn_fg = "#3e3520"  # тёмно-коричневый текст
 
         def style_button(btn):
+            # Функция для стилизации кнопок
             btn.config(
                 bg=btn_bg,
                 fg=btn_fg,
@@ -106,6 +108,7 @@ class GraphApp:
         nav_frame = Frame(self.sidebar, bg="#e6dfd3")
         nav_frame.pack(pady=15)
 
+        # Кнопки навигации
         btn_opts = dict(
             width=5,
             bg=btn_bg,
@@ -128,10 +131,11 @@ class GraphApp:
         self.canvas.pack(side=RIGHT, fill=BOTH, expand=True)
 
     def set_bindings(self):
+        # События мыши
         self.canvas.bind("<Button-1>", self.begin_draw)
         self.canvas.bind("<B1-Motion>", self.keep_drawing)
 
-        # Перемещение графика мышью левой кнопкой (за исключением режима свободного рисования)
+        # Перемещение графика мышью левой кнопкой
         self.canvas.bind("<ButtonPress-1>", self.start_pan)
         self.canvas.bind("<B1-Motion>", self.do_pan)
         self.canvas.bind("<ButtonRelease-1>", self.end_pan)
@@ -144,6 +148,7 @@ class GraphApp:
         self.pan_start = (event.x, event.y)
 
     def do_pan(self, event):
+        # Перемещение графика мышью левой кнопкой
         if self.is_panning and self.pan_start and not self.free_draw:
             dx = event.x - self.pan_start[0]
             dy = event.y - self.pan_start[1]
@@ -153,14 +158,17 @@ class GraphApp:
             self.render_graph()
 
     def end_pan(self, event):
+        # Завершение перемещения
         self.is_panning = False
         self.pan_start = None
 
     def set_zoom(self, value):
+        # Установка масштаба
         self.grid_zoom = int(value)
         self.render_graph()
 
     def toggle_drawing_mode(self):
+        # Переключение режима свободного рисования
         self.free_draw = not self.free_draw
         if self.free_draw:
             self.master.config(cursor="pencil")
@@ -168,10 +176,12 @@ class GraphApp:
             self.master.config(cursor="")
 
     def begin_draw(self, event):
+        # Начало рисования
         if self.free_draw:
             self.previous = (event.x, event.y)
 
     def keep_drawing(self, event):
+        # Продолжение рисования
         if self.free_draw and self.previous:
             x0, y0 = self.previous
             x1, y1 = event.x, event.y
@@ -179,6 +189,7 @@ class GraphApp:
             self.previous = (x1, y1)
 
     def shift(self, direction):
+        # Сдвиг графика
         delta = 25
         if direction == "left":
             self.shift_x += delta
@@ -191,6 +202,7 @@ class GraphApp:
         self.render_graph()
 
     def render_graph(self):
+        # Рисование графика
         self.canvas.delete("all")
         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
         cx, cy = w // 2 + self.shift_x, h // 2 + self.shift_y
